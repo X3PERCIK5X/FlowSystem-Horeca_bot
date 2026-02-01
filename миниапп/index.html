@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+  <title>HoReCa Demo — Меню</title>
+
+  <!-- Telegram WebApp -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- Верхняя панель -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">HoReCa Demo</div>
+    </div>
+
+  <div class="topbar-right">
+    <button id="historyButton" class="history-button" type="button">Мои заказы</button>
+    <button id="cartButton" class="cart-button" type="button" aria-label="Корзина">
+      <img src="cart.svg" alt="" class="cart-icon" />
+      <span id="cartCount">0</span>
+    </button>
+  </div>
+  </header>
+
+  <!-- Переключатель -->
+  <div class="top-tabs">
+    <button id="tabMenu" class="tab-btn active" type="button">Меню</button>
+    <button id="tabBooking" class="tab-btn" type="button">Забронировать стол</button>
+  </div>
+
+  <!-- Меню -->
+  <section id="menuSection">
+    <div id="categories" class="categories"></div>
+    <main id="menu" class="menu"></main>
+  </section>
+
+  <!-- Бронь -->
+  <section id="bookingSection" class="booking hidden">
+    <div class="booking-card">
+      <div class="booking-title">БРОНИРОВАНИЕ СТОЛА</div>
+
+      <div class="booking-block">
+        <label>
+          Дата *
+          <input id="bookingDate" type="text" placeholder="ДД.ММ.ГГГГ" />
+        </label>
+      </div>
+
+      <div class="booking-block">
+        <label>
+          Время *
+          <input id="bookingTime" type="text" placeholder="ЧЧ:ММ" />
+        </label>
+      </div>
+
+      <div class="booking-block">
+        <label>
+          Имя *
+          <input id="bookingName" type="text" placeholder="Имя и фамилия гостя" />
+        </label>
+        <label>
+          Телефон *
+          <input id="bookingPhone" type="text" placeholder="+7..." />
+        </label>
+        <label>
+          Количество гостей *
+          <input id="bookingGuests" type="number" min="1" max="50" placeholder="2" />
+        </label>
+        <label>
+          Комментарий (необязательно)
+          <input id="bookingComment" type="text" placeholder="Пожелания по бронированию" />
+        </label>
+      </div>
+
+      <div id="bookingStatus" class="booking-status"></div>
+      <button id="bookingSend" class="send-order" type="button">Забронировать стол</button>
+    </div>
+  </section>
+
+  <!-- КОРЗИНА -->
+  <div id="cartScreen" class="cart hidden">
+    <div class="cart-header">
+      <button id="closeCart" class="back-btn">← Назад</button>
+      <h2>Корзина</h2>
+    </div>
+
+    <div id="cartItems" class="cart-items"></div>
+
+    <div class="cart-form">
+      <label>
+        Telegram
+        <div id="tgProfile" class="tg-profile">—</div>
+      </label>
+
+      <label>
+        Телефон для подтверждения *
+        <input id="phoneInput" type="text" placeholder="+7..." />
+      </label>
+
+      <label>
+        К какому времени приготовить *
+        <input id="timeInput" type="text" placeholder="ЧЧ:ММ" />
+      </label>
+
+      <label>
+        Комментарий (необязательно)
+        <input id="commentInput" type="text" placeholder="Без лука" />
+      </label>
+    </div>
+
+    <div class="cart-footer">
+      <div class="cart-total">
+        Итого: <span id="totalPrice">0</span> ₽
+      </div>
+      <div id="statusBox" style="margin-top:10px; opacity:.85; font-size:14px;"></div>
+      <button id="sendOrder" class="send-order">
+        Отправить предзаказ
+      </button>
+    </div>
+  </div>
+
+  <!-- МОИ ЗАКАЗЫ -->
+  <div id="ordersScreen" class="orders hidden">
+    <div class="orders-header">
+      <button id="closeOrders" class="back-btn">← Назад</button>
+      <h2>Мои заказы</h2>
+    </div>
+    <div id="orderHistory" class="order-history"></div>
+  </div>
+
+  <!-- Плавающая корзина -->
+  <button id="cartFab" class="cart-fab hidden" type="button">
+    <img src="cart.svg" alt="" class="cart-icon" />
+    <span class="cart-fab-title">Корзина</span>
+    <span class="cart-fab-dot">·</span>
+    <span class="cart-fab-total"><span id="cartFabTotal">0</span> ₽</span>
+    <span class="cart-fab-count" id="cartFabCount">0</span>
+  </button>
+
+  <!-- Скрипты -->
+  <script>
+    // Пустые значения по умолчанию: API можно подключить позже.
+    window.HORECA_API_URL = "";
+    window.HORECA_API_KEY = "";
+  </script>
+  <script>
+    // Блокируем двойной тап (iOS Safari) для предотвращения зума
+    let __lastTouchEnd = 0;
+    document.addEventListener("touchend", function (e) {
+      const now = Date.now();
+      if (now - __lastTouchEnd < 300) e.preventDefault();
+      __lastTouchEnd = now;
+    }, { passive: false });
+  </script>
+  <script defer src="menu.js?v=20260131-demo"></script>
+  <script defer src="telegram.js?v=20260131-demo"></script>
+  <script defer src="cart.js?v=20260131-demo"></script>
+</body>
+</html>
