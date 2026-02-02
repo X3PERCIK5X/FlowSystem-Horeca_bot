@@ -176,8 +176,6 @@ async def notify_staff(
     target_ids = set(NOTIFY_CHAT_IDS)
     if extra_chat_ids:
         target_ids.update(extra_chat_ids)
-    if not target_ids:
-        return 0
     for cid in target_ids:
         try:
             # ⚠️ без ParseMode, чтобы спецсимволы не ломали отправку
@@ -203,9 +201,6 @@ async def chatid_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 async def testnotify_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Проверка: может ли бот писать в группу заказов."""
-    if not NOTIFY_CHAT_IDS:
-        await update.message.reply_text("NOTIFY_CHAT_IDS не задан. Некуда отправлять тест.")
-        return
     ok = await notify_staff(context, "✅ Тест: бот умеет отправлять сообщения в группу заказов.")
     await update.message.reply_text(f"Результат: отправлено в {ok} чат(ов) из {len(NOTIFY_CHAT_IDS)}.")
 
@@ -365,58 +360,7 @@ async def webapp_order_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     if data.get("type") != "preorder":
-        if data.get("type") == "booking":
-            user = update.effective_user
-            who = f"@{user.username}" if user and user.username else (user.full_name if user else "Неизвестно")
-
-            name = str(data.get("name", "") or "")
-            phone = str(data.get("phone", "") or "")
-            date = str(data.get("date", "") or "")
-            time = str(data.get("time", "") or "")
-            guests_raw = data.get("guests", "") or ""
-            try:
-                guests = int(guests_raw)
-            except Exception:
-                guests = 0
-            comment = str(data.get("comment", "") or "")
-
-            booking_id = create_booking(
-                tg_user_id=user.id if user else None,
-                tg_username=user.username if user else None,
-                date=date,
-                time=time,
-                guests=guests if guests > 0 else 1,
-                name=name,
-                phone=phone,
-                comment=comment,
-            )
-
-            text = (
-                f"📌 Новая бронь (Mini App) #{booking_id}\n"
-                f"От: {who}\n"
-                f"Имя: {name}\n"
-                f"Телефон: {phone}\n"
-                f"Дата: {date}\n"
-                f"Время: {time}\n"
-                f"Гостей: {guests}\n"
-                f"Комментарий: {comment or '-'}"
-            )
-            ok = await notify_staff(context, text)
-            logger.info("Booking notify sent to %s chats", ok)
-
-            if ok > 0 or not NOTIFY_CHAT_IDS:
-                try:
-                    await update.message.reply_text("✅ Бронь принята! Мы скоро свяжемся.")
-                except Exception:
-                    pass
-            else:
-                await update.message.reply_text(
-                    "❌ Бронь дошла до бота, но НЕ отправилась в группу.\n"
-                    "Проверь: бот добавлен в группу, chat_id верный, нет ограничений на отправку."
-                )
-            return
-
-        logger.info("⚠️ not supported type: %s", data.get("type"))
+        logger.info("⚠️ not preorder type: %s", data.get("type"))
         return
 
     user = update.effective_user
@@ -466,7 +410,7 @@ async def webapp_order_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     ok = await notify_staff(context, text, extra_chat_ids=[source_chat_id] if source_chat_id else None)
     logger.info("Preorder notify sent to %s chats", ok)
 
-    if ok > 0 or not NOTIFY_CHAT_IDS:
+    if ok > 0:
         # Ответ в тот чат, где был открыт мини‑апп
         try:
             await update.message.reply_text("✅ Предзаказ принят! Мы скоро свяжемся.")

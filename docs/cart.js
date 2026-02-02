@@ -622,6 +622,11 @@
   }
 
   async function sendBooking() {
+    if (!TG || typeof TG.sendOrderViaApi !== "function" || !TG.apiUrl) {
+      setBookingStatus("❌ Канал брони не настроен.");
+      return;
+    }
+
     const payload = {
       type: "booking",
       tg: TG?.initDataUnsafe?.user
@@ -661,27 +666,14 @@
     }
 
     setBookingStatus("⏳ Отправляю бронь...");
-
-    // Если API не настроен, отправляем через Telegram sendData
-    if (TG && typeof TG.sendOrderViaApi === "function" && TG.apiUrl) {
-      const res = await TG.sendOrderViaApi(payload);
-      if (!res.ok) {
-        setBookingStatus("❌ Не удалось отправить бронь.");
-        return;
-      }
-      setBookingStatus("✅ Бронь отправлена. Мы свяжемся с вами.");
-      saveProfile(payload.name, payload.phone);
+    const res = await TG.sendOrderViaApi(payload);
+    if (!res.ok) {
+      setBookingStatus("❌ Не удалось отправить бронь.");
       return;
     }
 
-    if (TG && typeof TG.sendOrder === "function") {
-      TG.sendOrder(payload);
-      setBookingStatus("✅ Бронь отправлена. Мы свяжемся с вами.");
-      saveProfile(payload.name, payload.phone);
-      return;
-    }
-
-    setBookingStatus("❌ Канал брони не настроен.");
+    setBookingStatus("✅ Бронь отправлена. Мы свяжемся с вами.");
+    saveProfile(payload.name, payload.phone);
   }
 
   // ---------- UI updates ----------
