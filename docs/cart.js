@@ -337,6 +337,7 @@
   }
 
   let scrollTick = false;
+  let categoryObserver = null;
   function getCategoriesBarBottom() {
     const bar = document.getElementById("categories");
     if (!bar) return 0;
@@ -359,15 +360,56 @@
         else break;
       }
       const id = current?.dataset?.cat;
-      if (id && id !== activeCategoryId) {
-        activeCategoryId = id;
-        applyActiveCategoryState("auto");
-      }
+      if (!id) return;
+      if (id !== activeCategoryId) activeCategoryId = id;
+      applyActiveCategoryState("auto");
     });
+  }
+
+  function setupCategoryIntersectionObserver() {
+    if (!("IntersectionObserver" in window)) return;
+    if (categoryObserver) categoryObserver.disconnect();
+
+    const visible = new Map();
+    categoryObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = entry.target?.dataset?.cat;
+          if (!id) continue;
+          if (entry.isIntersecting) {
+            visible.set(id, entry.target);
+          } else {
+            visible.delete(id);
+          }
+        }
+
+        if (!visible.size) return;
+
+        let nearest = null;
+        for (const el of visible.values()) {
+          const top = Math.abs(el.getBoundingClientRect().top - getCategoriesBarBottom());
+          if (!nearest || top < nearest.top) nearest = { top, el };
+        }
+        const nextId = nearest?.el?.dataset?.cat;
+        if (!nextId) return;
+        if (nextId !== activeCategoryId) activeCategoryId = nextId;
+        applyActiveCategoryState("auto");
+      },
+      {
+        root: null,
+        // учитываем липкую плашку категорий сверху
+        rootMargin: "-72px 0px -70% 0px",
+        threshold: [0, 0.05, 0.15, 0.3, 0.5, 0.75, 1],
+      },
+    );
+
+    const sections = Array.from(menuEl.querySelectorAll("section[data-cat]"));
+    for (const section of sections) categoryObserver.observe(section);
   }
 
   function setupCategoryObserver() {
     updateActiveCategoryByScroll();
+    setupCategoryIntersectionObserver();
     window.removeEventListener("scroll", updateActiveCategoryByScroll);
     window.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
     document.removeEventListener("scroll", updateActiveCategoryByScroll, true);
@@ -721,6 +763,7 @@
     totalPriceEl.textContent = String(total);
     renderCategories();
     renderMenu();
+    setupCategoryIntersectionObserver();
 
     if (cartFab && cartFabCount && cartFabTotal) {
       cartFabCount.textContent = String(count);
