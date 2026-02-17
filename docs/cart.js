@@ -218,8 +218,19 @@
     else cart[itemId] = q;
   }
 
+  function scrollActiveCategoryIntoView(behavior = "auto") {
+    if (!categoriesEl) return;
+    const activeEl = categoriesEl.querySelector(".category.active");
+    if (!activeEl) return;
+    activeEl.scrollIntoView({
+      behavior,
+      inline: "center",
+      block: "nearest",
+    });
+  }
+
   // ---------- Render Categories ----------
-  function renderCategories() {
+  function renderCategories(scrollBehavior = "auto") {
     categoriesEl.innerHTML = "";
     for (const c of MENU) {
       const b = document.createElement("div");
@@ -227,12 +238,13 @@
       b.textContent = c.title;
       b.onclick = () => {
         activeCategoryId = c.id;
-        renderCategories();
+        renderCategories("smooth");
         const section = document.getElementById(`cat-${c.id}`);
         if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
       };
       categoriesEl.appendChild(b);
     }
+    scrollActiveCategoryIntoView(scrollBehavior);
   }
 
   // ---------- Render Menu ----------
@@ -332,7 +344,7 @@
       const id = current?.dataset?.cat;
       if (id && id !== activeCategoryId) {
         activeCategoryId = id;
-        renderCategories();
+        renderCategories("auto");
       }
     });
   }
