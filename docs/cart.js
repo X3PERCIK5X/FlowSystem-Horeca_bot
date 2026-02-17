@@ -370,6 +370,14 @@
     updateActiveCategoryByScroll();
     window.removeEventListener("scroll", updateActiveCategoryByScroll);
     window.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
+    document.removeEventListener("scroll", updateActiveCategoryByScroll, true);
+    document.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true, capture: true });
+    if (menuSection) {
+      menuSection.removeEventListener("scroll", updateActiveCategoryByScroll);
+      menuSection.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
+    }
+    document.removeEventListener("touchmove", updateActiveCategoryByScroll, true);
+    document.addEventListener("touchmove", updateActiveCategoryByScroll, { passive: true, capture: true });
     window.addEventListener("resize", updateActiveCategoryByScroll);
   }
 
