@@ -218,6 +218,7 @@
     else cart[itemId] = q;
   }
 
+  let lastStripMoveAt = 0;
   function scrollActiveCategoryIntoView(behavior = "auto") {
     if (!categoriesEl) return;
     const activeEl = categoriesEl.querySelector(".category.active");
@@ -232,7 +233,19 @@
     const maxLeft = Math.max(0, categoriesEl.scrollWidth - categoriesEl.clientWidth);
     const nextLeft = Math.max(0, Math.min(maxLeft, targetLeft));
 
+    if (behavior === "smooth") {
+      const now = Date.now();
+      if (now - lastStripMoveAt < 140) return;
+      lastStripMoveAt = now;
+    }
     categoriesEl.scrollTo({ left: nextLeft, behavior });
+  }
+
+  function setActiveCategory(id, behavior = "auto") {
+    if (!id) return;
+    if (id === activeCategoryId) return;
+    activeCategoryId = id;
+    applyActiveCategoryState(behavior);
   }
 
   function applyActiveCategoryState(scrollBehavior = "auto") {
@@ -254,8 +267,7 @@
       b.dataset.catId = c.id;
       b.textContent = c.title;
       b.onclick = () => {
-        activeCategoryId = c.id;
-        applyActiveCategoryState("smooth");
+        setActiveCategory(c.id, "smooth");
         const section = document.getElementById(`cat-${c.id}`);
         if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
       };
@@ -360,9 +372,7 @@
         else break;
       }
       const id = current?.dataset?.cat;
-      if (!id) return;
-      if (id !== activeCategoryId) activeCategoryId = id;
-      applyActiveCategoryState("auto");
+      setActiveCategory(id, "smooth");
     });
   }
 
@@ -391,9 +401,7 @@
           if (!nearest || top < nearest.top) nearest = { top, el };
         }
         const nextId = nearest?.el?.dataset?.cat;
-        if (!nextId) return;
-        if (nextId !== activeCategoryId) activeCategoryId = nextId;
-        applyActiveCategoryState("auto");
+        setActiveCategory(nextId, "smooth");
       },
       {
         root: null,
@@ -409,17 +417,25 @@
 
   function setupCategoryObserver() {
     updateActiveCategoryByScroll();
-    setupCategoryIntersectionObserver();
-    window.removeEventListener("scroll", updateActiveCategoryByScroll);
-    window.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
-    document.removeEventListener("scroll", updateActiveCategoryByScroll, true);
-    document.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true, capture: true });
-    if (menuSection) {
-      menuSection.removeEventListener("scroll", updateActiveCategoryByScroll);
-      menuSection.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
+    const hasIO = "IntersectionObserver" in window;
+    if (hasIO) {
+      setupCategoryIntersectionObserver();
+      window.removeEventListener("scroll", updateActiveCategoryByScroll);
+      document.removeEventListener("scroll", updateActiveCategoryByScroll, true);
+      if (menuSection) menuSection.removeEventListener("scroll", updateActiveCategoryByScroll);
+      document.removeEventListener("touchmove", updateActiveCategoryByScroll, true);
+    } else {
+      window.removeEventListener("scroll", updateActiveCategoryByScroll);
+      window.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
+      document.removeEventListener("scroll", updateActiveCategoryByScroll, true);
+      document.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true, capture: true });
+      if (menuSection) {
+        menuSection.removeEventListener("scroll", updateActiveCategoryByScroll);
+        menuSection.addEventListener("scroll", updateActiveCategoryByScroll, { passive: true });
+      }
+      document.removeEventListener("touchmove", updateActiveCategoryByScroll, true);
+      document.addEventListener("touchmove", updateActiveCategoryByScroll, { passive: true, capture: true });
     }
-    document.removeEventListener("touchmove", updateActiveCategoryByScroll, true);
-    document.addEventListener("touchmove", updateActiveCategoryByScroll, { passive: true, capture: true });
     window.addEventListener("resize", updateActiveCategoryByScroll);
   }
 
