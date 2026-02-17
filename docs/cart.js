@@ -222,23 +222,40 @@
     if (!categoriesEl) return;
     const activeEl = categoriesEl.querySelector(".category.active");
     if (!activeEl) return;
-    activeEl.scrollIntoView({
-      behavior,
-      inline: "center",
-      block: "nearest",
-    });
+
+    const containerRect = categoriesEl.getBoundingClientRect();
+    const itemRect = activeEl.getBoundingClientRect();
+    const targetLeft =
+      categoriesEl.scrollLeft +
+      (itemRect.left - containerRect.left) -
+      (containerRect.width / 2 - itemRect.width / 2);
+    const maxLeft = Math.max(0, categoriesEl.scrollWidth - categoriesEl.clientWidth);
+    const nextLeft = Math.max(0, Math.min(maxLeft, targetLeft));
+
+    categoriesEl.scrollTo({ left: nextLeft, behavior });
+  }
+
+  function applyActiveCategoryState(scrollBehavior = "auto") {
+    if (!categoriesEl) return;
+    const items = categoriesEl.querySelectorAll(".category");
+    for (const item of items) {
+      item.classList.toggle("active", item.dataset.catId === activeCategoryId);
+    }
+    scrollActiveCategoryIntoView(scrollBehavior);
   }
 
   // ---------- Render Categories ----------
   function renderCategories(scrollBehavior = "auto") {
+    if (!categoriesEl) return;
     categoriesEl.innerHTML = "";
     for (const c of MENU) {
       const b = document.createElement("div");
       b.className = "category" + (c.id === activeCategoryId ? " active" : "");
+      b.dataset.catId = c.id;
       b.textContent = c.title;
       b.onclick = () => {
         activeCategoryId = c.id;
-        renderCategories("smooth");
+        applyActiveCategoryState("smooth");
         const section = document.getElementById(`cat-${c.id}`);
         if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
       };
@@ -344,7 +361,7 @@
       const id = current?.dataset?.cat;
       if (id && id !== activeCategoryId) {
         activeCategoryId = id;
-        renderCategories("auto");
+        applyActiveCategoryState("auto");
       }
     });
   }
